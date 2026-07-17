@@ -1,3 +1,5 @@
+from genericpath import isdir
+from pydoc import ispath
 import sys
 import hashlib
 import os
@@ -7,6 +9,8 @@ import copy
 functionCommand = sys.argv[1]
 log_path = sys.argv[2]
 json_dict = dict()
+store_dir = "./"
+store_path = store_dir + "output.json"
 
 def is_dir(path): #checks if input is a file or directory
     if os.path.isfile(path):
@@ -40,15 +44,15 @@ def hash_file(): #hashes one file
 
 
 def init(log_path):
-    if os.path.exists("./output.json") and os.path.isfile("./output.json"):
-        if os.path.getsize("./output.json"):
+    if os.path.exists(store_path) and os.path.isfile(store_path):
+        if os.path.getsize(store_path):
             print("Initialization Failure: files already hashed")
             return
     if is_dir(log_path):
         loop_over_dir()
     elif not is_dir(log_path): 
         hash_file()
-    with open("output.json", "a") as f:
+    with open(store_path, "a") as f:
         json.dump(json_dict, f, indent = 4)
     print("Hashes stored successfully")
 
@@ -115,24 +119,41 @@ def checkH(file_dict):
         print(modified_list)
 
 def check(log_path):
-    if not os.path.exists("./output.json"):
+    if not os.path.exists(store_path):
         print("Check Failure: no hashes to check")
         return
     else:
-        with open("./output.json", "r") as f:
+        with open(store_path, "r") as f:
             data = json.load(f)
         checkH(data)
    
+def load_current_json():
+    with open(store_path, "r") as f:
+        temp_dict = json.load(f)
+    return temp_dict
+
 def update(log_path):
-    if not os.path.exists("./output.json"): 
+    if not os.path.exists(store_path):
         print("Update Failure: 'output.json' does not exist")
         return
-    with open("output.json", "r") as f:
-        json_dict = json.load(f)
-    
-        
+    else:
+        temp_dict = load_current_json()
+        if is_dir(log_path):
+            loop_over_dir()
+        elif not is_dir(log_path):
+            hash_file()
+        new_dict = temp_dict | json_dict
+        with open(store_path, "w") as f:
+            json.dump(new_dict, f, indent = 4)
+        print("Updated files successfully")
 
 def main():
+    if sys.argv[1] == None || sys.argv[2] == None:
+        print("Invalid input")
+        return
+    if not os.file.isfile(log_path) || not os.file.isdir(log_path):
+        print("Invalid path")
+        return
     if functionCommand.lower() == 'init':
         init(log_path)
     elif functionCommand.lower() == 'check':
